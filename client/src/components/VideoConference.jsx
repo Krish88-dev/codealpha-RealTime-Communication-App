@@ -17,8 +17,9 @@ export default function VideoConference({ userName, roomId, onLeave }) {
   const videoGridRef = useRef(null);
 
   useEffect(() => {
-    // Initialize socket connection
-    const newSocket = io('http://localhost:3001');
+    // Connect to dynamic server URL in production, fallback to localhost in dev
+    const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:3001';
+    const newSocket = io(serverUrl);
     setSocket(newSocket);
 
     // Cleanup on unmount
