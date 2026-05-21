@@ -319,12 +319,27 @@ const VideoGrid = forwardRef(({ socket, roomId, userName, isMuted, isVideoOff, o
 
 const RemoteVideo = ({ stream, peerId, peerState }) => {
   const ref = useRef();
+  const [trackCount, setTrackCount] = useState(0);
   
   useEffect(() => {
     if (ref.current && stream) {
+      // Force assignment
       ref.current.srcObject = stream;
+
+      // Some browsers (like Safari) send audio and video tracks separately.
+      // If the video track arrives after the audio track, we must force the 
+      // video element to update, otherwise it stays black.
+      const handleAddTrack = () => {
+        setTrackCount(c => c + 1);
+        if (ref.current) {
+          ref.current.srcObject = stream;
+        }
+      };
+
+      stream.addEventListener('addtrack', handleAddTrack);
+      return () => stream.removeEventListener('addtrack', handleAddTrack);
     }
-  }, [stream]);
+  }, [stream, trackCount]);
 
   const remoteVideoOff = peerState?.isVideoOff;
   const remoteMuted = peerState?.isMuted;
@@ -348,7 +363,7 @@ const RemoteVideo = ({ stream, peerId, peerState }) => {
       <div className="absolute bottom-4 left-4 bg-black/60 px-3 py-1 rounded-md backdrop-blur-sm flex items-center gap-2">
         <span className="text-white text-sm font-medium flex items-center gap-1">
           User {peerId.substring(0,4)}
-          {remoteMuted && <MicOff className="w-3 h-3 text-danger" />}
+          {remoteMuted && <MicOff className="w-3 h-3 text-red-500" />}
         </span>
       </div>
     </div>
